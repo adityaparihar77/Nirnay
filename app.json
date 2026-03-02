@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Nirnay",
+    "slug": "nirnay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0a6b94"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nirnay.healthcare"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a6b94"
+      },
+      "package": "com.nirnay.healthcare",
+      "permissions": [
+        "ACCESS_NETWORK_STATE",
+        "INTERNET"
+      ]
+    },
+    "web": {},
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}

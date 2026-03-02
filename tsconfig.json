@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react-native",
+    "lib": [
+      "ES2020"
+    ],
+    "moduleResolution": "node",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "ES2020"
+  },
+  "include": [
+    "App.js",
+    "screens/**/*",
+    "components/**/*",
+    "services/**/*",
+    "hooks/**/*",
+    "utils/**/*",
+    "shims/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "lambda"
+  ],
+  "extends": "expo/tsconfig.base"
+}
