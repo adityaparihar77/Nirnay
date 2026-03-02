@@ -11,17 +11,30 @@ export const STORAGE_KEYS = {
 
 import { Platform } from 'react-native';
 
-// On web in development, route through the local CORS proxy (node proxy.js)
-// to work around API Gateway REST API not forwarding OPTIONS preflights for
-// PUT /patients/{id}, which blocks the browser before Lambda is ever called.
-// Platform.OS + __DEV__ is evaluated reliably by Metro at bundle time.
-const _realBase = 'https://41grxvatmc.execute-api.ap-south-1.amazonaws.com/prod';
-const _proxyBase = 'http://localhost:8083/prod';
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCTION base URL — AWS API Gateway.
+// This is the ONLY URL used in every production / Vercel build.
+// ─────────────────────────────────────────────────────────────────────────────
+export const API_BASE = 'https://41grxvatmc.execute-api.ap-south-1.amazonaws.com/prod';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCAL DEV ONLY — CORS proxy workaround.
+// AWS API Gateway (REST) does not forward OPTIONS preflights for every route,
+// which blocks PUT /patients/{id} in the browser before Lambda is ever called.
+// proxy.js (port 8083) answers preflights locally and forwards to API_BASE.
+//
+// __DEV__ is set to `false` by Metro/Expo at build time (npm run build),
+// so localhost is NEVER included in the production bundle.
+// ─────────────────────────────────────────────────────────────────────────────
+const _resolvedBase =
+  Platform.OS === 'web' && typeof __DEV__ !== 'undefined' && __DEV__
+    ? 'http://localhost:8083/prod'  // dev only — node proxy.js must be running
+    : API_BASE;                      // production — direct to AWS
 
 export const API = {
-  BASE_URL: Platform.OS === 'web' && __DEV__ ? _proxyBase : _realBase,
-  PATIENT_ENDPOINT: '/patients',
-  PATIENT_POST_ENDPOINT: '/patient',
+  BASE_URL: _resolvedBase,
+  PATIENT_ENDPOINT: '/patients',      // GET all / POST new
+  PATIENT_POST_ENDPOINT: '/patients', // back-compat alias
   TIMEOUT_MS: 15000,
 };
 

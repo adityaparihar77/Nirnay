@@ -22,7 +22,7 @@ const uploadPatient = async (patient) => {
   const timeout = setTimeout(() => controller.abort(), API.TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${API.BASE_URL}${API.PATIENT_POST_ENDPOINT}`, {
+    const response = await fetch(`${API.BASE_URL}${API.PATIENT_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
