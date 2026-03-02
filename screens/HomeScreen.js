@@ -31,6 +31,9 @@ import PatientTable from '../components/dashboard/PatientTable';
 import Toast from '../components/dashboard/Toast';
 import SkeletonLoader from '../components/dashboard/SkeletonLoader';
 import PatientModal from '../components/dashboard/PatientModal';
+import AmbulanceDispatch from '../components/dashboard/AmbulanceDispatch';
+import ERCapacityPanel from '../components/dashboard/ERCapacityPanel';
+import TrendLineChart from '../components/dashboard/TrendLineChart';
 
 import { FONT, SPACING, THEME } from '../utils/constants';
 import { makeShadow } from '../utils/helpers';
@@ -57,6 +60,7 @@ const ErrorState = ({ message }) => (
 /* â”€â”€â”€ Main screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const HomeScreen = ({ navigation }) => {
   const {
+    patients,
     filtered,
     counts,
     filter,
@@ -75,14 +79,24 @@ const HomeScreen = ({ navigation }) => {
     pullRefresh,
   } = usePatients();
 
-  const [toastVisible, setToastVisible]      = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [modalVisible, setModalVisible]       = useState(false);
+  const [toastVisible, setToastVisible]           = useState(false);
+  const [selectedPatient, setSelectedPatient]       = useState(null);
+  const [modalVisible, setModalVisible]             = useState(false);
+  const [dispatchPatient, setDispatchPatient]       = useState(null);
+  const [dispatchVisible, setDispatchVisible]       = useState(false);
 
   useEffect(() => {
     if (newRedAlert) {
       setToastVisible(true);
       dismissRedAlert();
+      // Auto-open ambulance dispatch for the most recent RED patient
+      const newestRed = patients
+        .filter((p) => p.riskLevel === 'RED')
+        .sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt))[0];
+      if (newestRed) {
+        setDispatchPatient(newestRed);
+        setDispatchVisible(true);
+      }
     }
   }, [newRedAlert]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -118,6 +132,16 @@ const HomeScreen = ({ navigation }) => {
         visible={modalVisible}
         onClose={handleModalClose}
         onReviewed={handlePatientReviewed}
+      />
+
+      {/* Ambulance dispatch — auto-triggered for new RED alerts */}
+      <AmbulanceDispatch
+        visible={dispatchVisible}
+        patient={dispatchPatient}
+        onClose={() => {
+          setDispatchVisible(false);
+          setTimeout(() => setDispatchPatient(null), 300);
+        }}
       />
 
       {/* Header */}
@@ -165,8 +189,14 @@ const HomeScreen = ({ navigation }) => {
           onFilterChange={setFilter}
         />
 
+        {/* ER capacity load simulation */}
+        <ERCapacityPanel criticalCount={counts.RED} />
+
         {/* Risk distribution chart */}
         <RiskChart counts={counts} />
+
+        {/* Real-time trend line chart */}
+        <TrendLineChart counts={counts} dataVersion={dataVersion} />
 
         {/* Filter bar + refresh controls */}
         <FilterBar

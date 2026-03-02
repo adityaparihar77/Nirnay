@@ -111,9 +111,10 @@ const MobileHomeScreen = ({ navigation }) => {
   const handleSubmit = useCallback(async (formData) => {
     setIsSubmitting(true);
     try {
-      const { level, config, reasons } = calculateRisk(
+      const { level, config, reasons, aiRisk } = calculateRisk(
         formData.bloodPressure,
-        formData.temperature
+        formData.temperature,
+        formData.age
       );
 
       const patientRecord = await savePatient({
@@ -131,6 +132,7 @@ const MobileHomeScreen = ({ navigation }) => {
         riskLevel:  level,
         riskConfig: config,
         reasons,
+        aiRisk,
       });
 
       // Attempt background sync if online

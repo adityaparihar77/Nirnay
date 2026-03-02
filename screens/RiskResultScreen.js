@@ -117,6 +117,93 @@ const VitalRow = ({ icon, label, value, unit, highlight }) => (
   </View>
 );
 
+/* ─── AI score breakdown row ────────────────────────────── */
+const BreakdownRow = ({ label, value, max, color }) => (
+  <View style={styles.breakdownRow}>
+    <Text style={styles.breakdownLabel}>{label}</Text>
+    <View style={styles.breakdownBarTrack}>
+      <View
+        style={[
+          styles.breakdownBarFill,
+          { width: `${Math.round((value / max) * 100)}%`, backgroundColor: color },
+        ]}
+      />
+    </View>
+    <Text style={[styles.breakdownValue, { color }]}>{value}</Text>
+  </View>
+);
+
+/* ─── AI Risk Card ───────────────────────────────────────── */
+const PROB_COLORS = { High: '#D32F2F', Medium: '#F57F17', Low: '#2E7D32' };
+
+const AIRiskCard = ({ aiRisk, fadeAnim, slideAnim }) => {
+  if (!aiRisk) return null;
+  const { score, probability, breakdown } = aiRisk;
+  const probColor = PROB_COLORS[probability] ?? '#455A64';
+
+  return (
+    <Animated.View
+      style={[
+        styles.card,
+        styles.aiCard,
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      {/* Header */}
+      <View style={styles.cardHeader}>
+        <Ionicons name="analytics-outline" size={20} color="#7C4DFF" />
+        <Text style={[styles.cardTitle, { color: '#7C4DFF' }]}>AI Risk Assessment</Text>
+        <View style={styles.aiBadge}>
+          <Text style={styles.aiBadgeText}>AI</Text>
+        </View>
+      </View>
+
+      {/* Score + probability */}
+      <View style={styles.aiScoreRow}>
+        {/* Circular score dial */}
+        <View style={[styles.aiScoreDial, { borderColor: probColor }]}>
+          <Text style={[styles.aiScoreNumber, { color: probColor }]}>{score}</Text>
+          <Text style={styles.aiScoreMax}>/100</Text>
+        </View>
+
+        <View style={styles.aiScoreInfo}>
+          <Text style={styles.aiScoreLabel}>AI Risk Score</Text>
+          <Text style={[styles.aiScoreValue, { color: probColor }]}>{score}%</Text>
+          <View style={[styles.probPill, { borderColor: probColor, backgroundColor: probColor + '18' }]}>
+            <View style={[styles.probDot, { backgroundColor: probColor }]} />
+            <Text style={[styles.probText, { color: probColor }]}>
+              Risk Probability: {probability}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Score bar */}
+      <View style={styles.scoreBarWrap}>
+        <View style={styles.scoreBarTrack}>
+          <View
+            style={[
+              styles.scoreBarFill,
+              { width: `${score}%`, backgroundColor: probColor },
+            ]}
+          />
+        </View>
+        <Text style={styles.scoreBarCaption}>{score}% of maximum risk</Text>
+      </View>
+
+      {/* Per-vital breakdown */}
+      <Text style={styles.breakdownTitle}>Score Breakdown</Text>
+      <BreakdownRow label="Blood Pressure" value={breakdown.bpContribution}   max={50} color="#5C6BC0" />
+      <BreakdownRow label="Temperature"    value={breakdown.tempContribution} max={40} color="#26A69A" />
+      <BreakdownRow label="Age Factor"     value={breakdown.ageContribution}  max={10} color="#FF7043" />
+
+      <Text style={styles.aiDisclaimer}>
+        AI score is advisory. Clinical judgement takes precedence.
+      </Text>
+    </Animated.View>
+  );
+};
+
 /* ─── Reason item ────────────────────────────────────── */
 const ReasonItem = ({ text, color }) => (
   <View style={styles.reasonItem}>
@@ -127,7 +214,7 @@ const ReasonItem = ({ text, color }) => (
 
 /* ─── Main screen ────────────────────────────────────── */
 const RiskResultScreen = ({ route, navigation }) => {
-  const { patient, riskLevel, riskConfig, reasons } = route.params;
+  const { patient, riskLevel, riskConfig, reasons, aiRisk } = route.params;
 
   const scaleAnim = useRef(new Animated.Value(0.6)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -292,6 +379,9 @@ const RiskResultScreen = ({ route, navigation }) => {
             highlight={tempHighlight}
           />
         </Animated.View>
+
+        {/* AI Risk Score card */}
+        <AIRiskCard aiRisk={aiRisk} fadeAnim={fadeAnim} slideAnim={slideAnim} />
 
         {/* Assessment reasons */}
         <Animated.View
@@ -570,6 +660,158 @@ const styles = StyleSheet.create({
     fontSize: FONT.sizes.md,
     fontWeight: '700',
     color: THEME.primary,
+  },
+
+  /* ── AI Risk Card ─────────────────────────────────── */
+  aiCard: {
+    borderWidth: 1.5,
+    borderColor: '#D1C4E9',
+  },
+  aiBadge: {
+    backgroundColor: '#7C4DFF',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  aiBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+
+  /* Score dial */
+  aiScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  aiScoreDial: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  aiScoreNumber: {
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 32,
+  },
+  aiScoreMax: {
+    fontSize: 11,
+    color: THEME.textMuted,
+    fontWeight: '600',
+  },
+
+  /* Score info */
+  aiScoreInfo: {
+    flex: 1,
+    gap: SPACING.xs,
+  },
+  aiScoreLabel: {
+    fontSize: FONT.sizes.sm,
+    color: THEME.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  aiScoreValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 32,
+  },
+
+  /* Probability pill */
+  probPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    marginTop: 4,
+  },
+  probDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  probText: {
+    fontSize: FONT.sizes.sm,
+    fontWeight: '700',
+  },
+
+  /* Score bar */
+  scoreBarWrap: {
+    marginBottom: SPACING.md,
+    gap: 4,
+  },
+  scoreBarTrack: {
+    height: 8,
+    backgroundColor: '#E8EAF6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  scoreBarFill: {
+    height: 8,
+    borderRadius: 4,
+  },
+  scoreBarCaption: {
+    fontSize: FONT.sizes.xs,
+    color: THEME.textMuted,
+    textAlign: 'right',
+  },
+
+  /* Breakdown */
+  breakdownTitle: {
+    fontSize: FONT.sizes.sm,
+    fontWeight: '700',
+    color: THEME.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: SPACING.xs,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: 6,
+  },
+  breakdownLabel: {
+    width: 110,
+    fontSize: FONT.sizes.sm,
+    color: THEME.textSecondary,
+  },
+  breakdownBarTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#EEEEEE',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  breakdownBarFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  breakdownValue: {
+    width: 32,
+    fontSize: FONT.sizes.sm,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+
+  aiDisclaimer: {
+    fontSize: 11,
+    color: THEME.textMuted,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: SPACING.sm,
   },
 });
 

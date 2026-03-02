@@ -27,6 +27,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { FONT, SPACING, THEME, API } from '../../utils/constants';
 import { formatDateTime, formatRelativeTime, makeShadow } from '../../utils/helpers';
+import AmbulanceDispatch from './AmbulanceDispatch';
 
 /* ─── Status badge ───────────────────────────────────────── */
 const STATUS_CONFIG = {
@@ -67,9 +68,10 @@ const RISK_COLORS = {
 
 /* ─── Main modal ─────────────────────────────────────────── */
 const PatientModal = ({ patient, visible, onClose, onReviewed }) => {
-  const [advice, setAdvice]       = useState('');
-  const [saving, setSaving]       = useState(false);
-  const [toastMsg, setToastMsg]   = useState(null);
+  const [advice, setAdvice]             = useState('');
+  const [saving, setSaving]             = useState(false);
+  const [toastMsg, setToastMsg]         = useState(null);
+  const [dispatchVisible, setDispatchVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(600)).current;
   const toastAnim = useRef(new Animated.Value(-80)).current;
 
@@ -137,6 +139,12 @@ const PatientModal = ({ patient, visible, onClose, onReviewed }) => {
       onRequestClose={onClose}
       statusBarTranslucent
     >
+      {/* Ambulance dispatch overlay — rendered inside the same Modal stack */}
+      <AmbulanceDispatch
+        visible={dispatchVisible}
+        patient={patient}
+        onClose={() => setDispatchVisible(false)}
+      />
       <View style={styles.overlay}>
         <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
           <KeyboardAvoidingView
@@ -247,6 +255,22 @@ const PatientModal = ({ patient, visible, onClose, onReviewed }) => {
                   textAlignVertical="top"
                 />
               </View>
+
+              {/* Emergency dispatch — only shown for CRITICAL (RED) patients */}
+              {patient.riskLevel === 'RED' && (
+                <TouchableOpacity
+                  style={styles.dispatchButton}
+                  onPress={() => setDispatchVisible(true)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.dispatchButtonEmoji}>🚑</Text>
+                  <View style={styles.dispatchButtonText}>
+                    <Text style={styles.dispatchButtonTitle}>Dispatch Ambulance</Text>
+                    <Text style={styles.dispatchButtonSub}>Trigger emergency response</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color="#fff" />
+                </TouchableOpacity>
+              )}
 
               {/* Action buttons */}
               <TouchableOpacity
@@ -475,6 +499,36 @@ const styles = StyleSheet.create({
     fontSize: FONT.sizes.md,
     color: THEME.textSecondary,
     fontWeight: '600',
+  },
+
+  /* Dispatch ambulance button */
+  dispatchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: '#C62828',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 14,
+    ...makeShadow(4, 10, 0.35, 6, '#C62828'),
+  },
+  dispatchButtonEmoji: {
+    fontSize: 26,
+    lineHeight: 30,
+  },
+  dispatchButtonText: {
+    flex: 1,
+  },
+  dispatchButtonTitle: {
+    color: '#fff',
+    fontSize: FONT.sizes.md,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  dispatchButtonSub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: FONT.sizes.xs,
+    marginTop: 1,
   },
 
   /* Toast */
